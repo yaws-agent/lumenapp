@@ -32,15 +32,15 @@ html, body {
   overflow: hidden; -webkit-font-smoothing: antialiased;
 }
 
-/* More vibrant Apple-style wallpaper (Sequoia-like color blobs) so glass + highlights pop */
+/* Apple-style wallpaper: softer, less vaporwave — gentle color, more neutral */
 .wallpaper {
   position: fixed; inset: 0;
   background:
-    radial-gradient(700px 600px at 12% 12%, rgba(120,150,255,0.55) 0%, transparent 60%),
-    radial-gradient(650px 600px at 88% 22%, rgba(255,120,200,0.50) 0%, transparent 58%),
-    radial-gradient(750px 700px at 72% 88%, rgba(90,200,255,0.55) 0%, transparent 60%),
-    radial-gradient(600px 500px at 30% 80%, rgba(180,130,255,0.45) 0%, transparent 58%),
-    linear-gradient(135deg, #c8d4ef 0%, #d9c9ec 50%, #c2d8ef 100%);
+    radial-gradient(620px 540px at 14% 16%, rgba(150,170,235,0.42) 0%, transparent 62%),
+    radial-gradient(580px 520px at 86% 24%, rgba(225,160,210,0.38) 0%, transparent 60%),
+    radial-gradient(640px 600px at 72% 86%, rgba(130,185,235,0.42) 0%, transparent 62%),
+    radial-gradient(520px 460px at 30% 82%, rgba(180,160,230,0.34) 0%, transparent 60%),
+    linear-gradient(135deg, #d6dcea 0%, #e0d6e8 50%, #cfdcea 100%);
   z-index: 0;
 }
 
@@ -76,11 +76,11 @@ html, body {
 /* ===== Sidebar ===== */
 .sidebar {
   width: 220px; padding: 16px 12px; display: flex; flex-direction: column;
-  background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.12));
-  border-right: 1px solid var(--glass-border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+  border-right: 1px solid var(--glass-border-soft);
   backdrop-filter: blur(50px) saturate(200%);
   -webkit-backdrop-filter: blur(50px) saturate(200%);
-  box-shadow: inset -1px 0 0 rgba(255,255,255,0.4);
+  box-shadow: inset -1px 0 0 rgba(255,255,255,0.3);
   position: relative;
 }
 .brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 18px; }
@@ -93,7 +93,7 @@ html, body {
 .nav-list { list-style: none; display: flex; flex-direction: column; gap: 4px; flex: 1; }
 .nav-item {
   display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm);
-  font-size: 13.5px; font-weight: 500; color: rgba(50,50,65,0.78); cursor: pointer;
+  font-size: 13.5px; font-weight: 550; color: rgba(35,35,50,0.88); cursor: pointer;
   border: 1px solid transparent; transition: background 0.18s, color 0.18s;
 }
 .nav-item .ico { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.85; stroke: currentColor; }
@@ -106,8 +106,9 @@ html, body {
   position: relative;
 }
 .nav-item.active::after {
-  content: ""; position: absolute; left: 10%; right: 10%; top: 1px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+  content: ""; position: absolute; left: 10%; right: 10%; top: 1px; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,1), transparent);
+  box-shadow: 0 0 6px rgba(255,255,255,0.9);
 }
 .sidebar-footer { padding-top: 8px; border-top: 1px solid var(--glass-border-soft); }
 
@@ -121,14 +122,15 @@ html, body {
 /* ===== Cards (glassy, crisp highlight, defined shadow) ===== */
 .card {
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(255,255,255,0.8);
   border-top: 2px solid rgba(255,255,255,1);
   border-radius: var(--radius-md);
   padding: 18px 20px; margin-bottom: 16px;
   box-shadow:
     0 8px 18px rgba(30,30,70,0.28),
     0 2px 4px rgba(30,30,70,0.18),
-    inset 0 1px 0 rgba(255,255,255,0.95);
+    inset 0 1px 1px rgba(255,255,255,0.95),
+    inset 0 0 0 1px rgba(255,255,255,0.35);
   position: relative; overflow: hidden;
 }
 /* blur layer separated so the bright border stays visible on top */
@@ -139,9 +141,10 @@ html, body {
   -webkit-backdrop-filter: blur(40px) saturate(200%);
 }
 .card::after {
-  content: ""; position: absolute; left: 6%; right: 6%; top: 0; height: 2px; z-index: 3;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,1), transparent);
-  box-shadow: 0 0 7px rgba(255,255,255,1);
+  content: ""; position: absolute; left: 4%; right: 4%; top: -1px; height: 3px; z-index: 3;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,1) 30%, rgba(255,255,255,1) 70%, transparent);
+  box-shadow: 0 0 10px rgba(255,255,255,1), 0 0 18px rgba(190,215,255,0.85);
+  border-radius: 3px;
   pointer-events: none;
 }
 .card > * { position: relative; z-index: 2; }
@@ -159,7 +162,7 @@ html, body {
   color: rgba(30,30,45,0.95); padding: 10px 18px; margin: 6px 8px 6px 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.6);
+  border: 1.5px solid rgba(255,255,255,0.8);
   border-top: 2px solid rgba(255,255,255,1);
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(30,30,70,0.22), inset 0 1px 0 rgba(255,255,255,0.95);
@@ -174,9 +177,9 @@ html, body {
 }
 .glass-btn > * { position: relative; z-index: 1; }
 .glass-btn::after {
-  content: ""; position: absolute; left: 8%; right: 8%; top: 1px; height: 1.5px; z-index: 2;
+  content: ""; position: absolute; left: 8%; right: 8%; top: 1px; height: 2px; z-index: 2;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,1), transparent);
-  box-shadow: 0 0 5px rgba(255,255,255,0.9);
+  box-shadow: 0 0 6px rgba(255,255,255,0.95);
   pointer-events: none;
 }
 .glass-btn:hover {
@@ -187,13 +190,16 @@ html, body {
 .glass-btn:active { transform: translateY(1px) scale(0.99); box-shadow: 0 2px 6px rgba(30,30,70,0.20), inset 0 1px 0 rgba(255,255,255,0.7); }
 .glass-btn.primary {
   background: transparent;
-  border-color: rgba(10,132,255,0.5);
-  border-top: 2px solid rgba(180,220,255,1);
+  border: 1.5px solid rgba(120,180,255,0.85);
+  border-top: 2px solid rgba(210,235,255,1);
   color: rgba(10,60,140,0.95);
   text-shadow: 0 1px 1px rgba(255,255,255,0.45);
 }
-.glass-btn.primary::before { background: rgba(10,132,255,0.20); }
-.glass-btn.primary:hover { background: var(--accent-tint-strong); }
+.glass-btn.primary::before { background: linear-gradient(180deg, rgba(90,170,255,0.42) 0%, rgba(10,132,255,0.30) 60%, rgba(10,132,255,0.18) 100%); }
+.glass-btn.primary::after {
+  box-shadow: 0 0 8px rgba(255,255,255,1), 0 0 16px rgba(170,210,255,0.9);
+}
+.glass-btn.primary:hover { background: var(--accent-tint-strong); box-shadow: 0 8px 20px rgba(10,90,220,0.34), inset 0 1px 0 rgba(255,255,255,0.95); }
 .glass-btn.danger { background: var(--danger-tint); border-color: rgba(255,59,48,0.5); color: rgba(140,20,15,0.95); }
 
 /* ===== Fields ===== */
