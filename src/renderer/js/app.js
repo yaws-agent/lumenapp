@@ -124,15 +124,19 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
 // init
 refreshStatus();
 
-// ---- Pointer-tracking sheen over cards ----
-document.querySelectorAll('.card').forEach((card) => {
-  card.classList.add('glass-pointer-sheen');
-  card.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
+// ---- Pointer-tracking sheen over cards and dropzones ----
+// Create a dedicated overlay div so we don't clobber .card::before/::after.
+document.querySelectorAll('.card, .dropzone').forEach((el) => {
+  el.classList.add('glass-pointer-sheen');
+  const sheen = document.createElement('div');
+  sheen.className = 'pointer-sheen';
+  el.appendChild(sheen);
+  el.addEventListener('mousemove', (e) => {
+    const rect = el.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    card.style.setProperty('--mx', x + '%');
-    card.style.setProperty('--my', y + '%');
+    el.style.setProperty('--mx', x + '%');
+    el.style.setProperty('--my', y + '%');
   });
 });
 
