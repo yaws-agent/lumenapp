@@ -1,0 +1,14 @@
+{
+  "name": "lumenapp",
+  "version": "1.0.0",
+  "description": "Lumen App — a Liquid Glass interface for slsteam-moon (Linux)",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron src/main.js"
+  },
+  "author": "Hermes",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^43.2.0"
+  }
+}
