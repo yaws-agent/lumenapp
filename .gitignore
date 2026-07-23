@@ -4,3 +4,14 @@ node_modules/
 *.log
 .DS_Store
 dist/
+
+# Internal docs / local-only artifacts (never commit)
+AGENT_TASK.md
+BRIEFING.md
+*.mp4
+*.png
+*.mov
+*.pdf
+# credential files
+.hermes/
+ghpat
