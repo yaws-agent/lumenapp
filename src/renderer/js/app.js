@@ -426,3 +426,38 @@ document.querySelectorAll('.nav-item').forEach((item, i) => {
     }
   } catch (e) {}
 })();
+
+/* ============================================================
+   Real Liquid Glass refraction (deepika-builds/liquid-glass, MIT)
+   Applies a per-element SVG displacement bulge + chromatic fringe to
+   the glass surfaces. Falls back to frosted blur where unsupported.
+   ============================================================ */
+(function () {
+  if (typeof liquidGlass !== 'function') return; // module failed to load
+  // Tuned from the canonical implementation + Atlas Pup's layering notes.
+  const GLASS_OPTS = {
+    scale: -120,      // negative = magnifying bulge at the rim
+    chroma: 6,        // chromatic-aberration fringe intensity
+    border: 0.07,     // refraction confined to an edge band
+    mapBlur: 13,      // edge-curvature softness
+    blur: 3,          // interior frost behind the glass
+    saturate: 1.5,    // vibrancy boost through the glass
+  };
+  // Surfaces that should refract. Buttons get slightly tighter edge band.
+  const SEL = '.card, .sidebar, .titlebar, .glass-btn, .glass-input, .dropzone, .toast, .item-row, .recent-row, .manage-row';
+  function applyGlass() {
+    document.querySelectorAll(SEL).forEach((el) => {
+      if (el.dataset.lg === '1') return;
+      const opts = Object.assign({}, GLASS_OPTS);
+      if (el.classList.contains('glass-btn')) { opts.scale = -90; opts.border = 0.10; opts.mapBlur = 9; }
+      try { liquidGlass(el, opts); el.dataset.lg = '1'; } catch (e) {}
+    });
+  }
+  if (document.readyState === 'complete' || document.readyState === 'interactive') applyGlass();
+  else document.addEventListener('DOMContentLoaded', applyGlass);
+  // Re-apply when views switch (new cards may be rendered on navigate)
+  document.addEventListener('click', (e) => {
+    const item = e.target.closest && e.target.closest('.nav-item');
+    if (item) setTimeout(applyGlass, 60);
+  });
+})();
