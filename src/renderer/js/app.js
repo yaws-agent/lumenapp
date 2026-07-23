@@ -31,6 +31,7 @@ navItems.forEach((item) => {
       el.classList.add('view-entrance');
     }
     if (target === 'home') { refreshStatus(); loadItems(); }
+    else if (target === 'manage') { const q = (document.getElementById('manageSearch') || {}).value || ''; renderManage(q); }
   });
 });
 
@@ -166,24 +167,43 @@ document.getElementById('btnUninstallPlugin').addEventListener('click', async ()
   el.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
 });
 
-// ---- Cloud / Manage ----
-const cloudEl = document.getElementById('cloudEnable');
-cloudEl.addEventListener('click', () => {
-  cloudEl.classList.toggle('on');
-  window.lumen.setConfig('DisableCloud', cloudEl.classList.contains('on') ? 'no' : 'yes');
-});
-document.getElementById('btnCloud').addEventListener('click', async () => {
-  const r = await window.lumen.manageCloud();
-  toast(r && r.ok ? 'Cloud saves enabled' : 'Cloud setup: ' + ((r && r.error) || 'done'), r && r.ok ? 'ok' : 'err');
-});
-document.getElementById('btnBackup').addEventListener('click', async () => {
-  const r = await window.lumen.backup();
-  toast(r && r.ok ? 'Config backed up' : 'Backup failed: ' + ((r && r.error) || ''), r && r.ok ? 'ok' : 'err');
-});
-document.getElementById('btnRestore').addEventListener('click', async () => {
-  const r = await window.lumen.restore();
-  toast(r && r.ok ? 'Config restored' : 'Restore failed: ' + ((r && r.error) || 'no backup'), r && r.ok ? 'ok' : 'err');
-});
+// ---- Cloud / Backups: moved to Settings tab (re-wired when Settings is redone) ----
+
+// ---- Manage: searchable list of games added by Lumen App ----
+function fmtDate(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) +
+      ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  } catch (e) { return ''; }
+}
+async function renderManage(query) {
+  const el = document.getElementById('manageList');
+  if (!el) return;
+  let items = [];
+  try { items = (await window.lumen.getItems()) || []; } catch (e) {}
+  const games = items.filter((i) => i.type === 'game')
+    .filter((g) => {
+      if (!query) return true;
+      const q = query.toLowerCase();
+      return (g.name || '').toLowerCase().includes(q) ||
+             (g.appid ? String(g.appid) : '').includes(q);
+    });
+  if (!games.length) {
+    el.innerHTML = '<p class="muted small" style="text-align:center;padding:24px">No games found.</p>';
+    return;
+  }
+  el.innerHTML = games.map((g) => `
+    <div class="manage-row">
+      <div class="manage-banner">${g.image ? `<img src="${g.image}" alt="">` : '<span class="manage-banner-ph">🎮</span>'}</div>
+      <div class="manage-info">
+        <div class="manage-name">${g.name || 'Unknown'}</div>
+        <div class="manage-sub">appid ${g.appid || '—'} · added ${fmtDate(g.addedAt)}</div>
+      </div>
+    </div>`).join('');
+}
+const manageSearch = document.getElementById('manageSearch');
+if (manageSearch) manageSearch.addEventListener('input', (e) => renderManage(e.target.value));
 
 // ---- Home dropzone (.lua / .manifest / .zip) -> shared store ----
 const dz = document.getElementById('dropzone');

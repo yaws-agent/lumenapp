@@ -131,20 +131,13 @@
 
         <section class="view hidden" id="view-manage">
           <h1 class="view-title">Manage</h1>
-          <div class="card">
-            <h3>CloudRedirect</h3>
-            <p class="muted">Native Steam Cloud via Google Drive / OneDrive.</p>
-            <label class="toggle-row">
-              <span>Enable Cloud Saves</span>
-              <div class="glass-toggle" id="cloudEnable" role="switch" tabindex="0"></div>
-            </label>
-            <button class="glass-btn" id="btnCloud">Manage CloudRedirect</button>
+          <div class="card manage-search">
+            <div class="search-wrap">
+              <span class="search-ico">⌕</span>
+              <input type="text" id="manageSearch" class="glass-input search-input" placeholder="Search games added by Lumen App…" />
+            </div>
           </div>
-          <div class="card">
-            <h3>Backups</h3>
-            <button class="glass-btn" id="btnBackup">Backup config</button>
-            <button class="glass-btn" id="btnRestore">Restore config</button>
-          </div>
+          <div class="manage-list" id="manageList"></div>
         </section>
 
         <section class="view hidden" id="view-add">
