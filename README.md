@@ -19,7 +19,7 @@
 
 ## ✨ Features
 
-- **Glass UI** — frosted glass, iridescent cursor-tracking hover lens, raised active pills. Validated at ~9/10 fidelity.
+- **Glass UI** — frosted glass, iridescent cursor-tracking hover lens, raised active pills.
 - **8 views** — Home, Plugin, Fixes, Manage, Manifests, Mode, Settings, About.
 - **slsteam-moon backend** — install/uninstall the hook, toggle fixes (parental restrictions, family-share lock, unowned games), manage Cloud saves, install manifests, switch update channels.
 - **Distro-agnostic AppImage** — one executable, no install, no `chmod` needed.
