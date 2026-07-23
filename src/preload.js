@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('lumen', {
   installPlugin: () => ipcRenderer.invoke('backend:installPlugin'),
   uninstallPlugin: () => ipcRenderer.invoke('backend:uninstallPlugin'),
   setConfig: (k, v) => ipcRenderer.invoke('backend:setConfig', { key: k, value: v }),
+  getConfig: () => ipcRenderer.invoke('backend:getConfig'),
   manageCloud: () => ipcRenderer.invoke('backend:manageCloud'),
   backup: () => ipcRenderer.invoke('backend:backup'),
   restore: () => ipcRenderer.invoke('backend:restore'),

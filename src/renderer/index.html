@@ -159,28 +159,20 @@
 
         <section class="view hidden" id="view-settings">
           <h1 class="view-title">Settings</h1>
+
           <div class="card">
+            <h3 class="section-title">slsteam-moon</h3>
+            <div id="slsConfig"></div>
+          </div>
+
+          <div class="card">
+            <h3 class="section-title">Hubcap</h3>
             <label class="field">
-              <span>Steam path</span>
-              <input type="text" id="steamPath" class="glass-input" placeholder="/usr/bin/steam" />
+              <span>Hubcap key</span>
+              <input type="password" id="hubcapKey" class="glass-input" placeholder="Paste your Hubcap manifest key" />
             </label>
-            <label class="field">
-              <span>Hubcap API key</span>
-              <input type="password" id="hubcapKey" class="glass-input" placeholder="Personal Hubcap key" />
-            </label>
-            <label class="toggle-row">
-              <span>Auto-update apps (don't lock manifests)</span>
-              <div class="glass-toggle" id="autoUpdate" role="switch" tabindex="0"></div>
-            </label>
-            <label class="toggle-row">
-              <span>Launch Lumen at login</span>
-              <div class="glass-toggle" id="autostart" role="switch" tabindex="0"></div>
-            </label>
-            <label class="toggle-row">
-              <span>Notifications</span>
-              <div class="glass-toggle" id="notif" role="switch" tabindex="0"></div>
-            </label>
-            <button class="glass-btn primary" id="btnSaveSettings">Save Settings</button>
+            <p class="muted small">You can get the key at <a href="https://hubcapmanifest.com" class="link" id="hubcapLink">hubcapmanifest.com</a></p>
+            <button class="glass-btn primary" id="btnSaveHubcap">Save Hubcap key</button>
           </div>
         </section>
 

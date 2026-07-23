@@ -105,6 +105,32 @@ ipcMain.handle('backend:installPlugin', () => {
 });
 ipcMain.handle('backend:uninstallPlugin', () => runSetup('uninstall'));
 ipcMain.handle('backend:setConfig', (_e, { key, value }) => { setConfigKey(key, value); return true; });
+ipcMain.handle('backend:getConfig', () => {
+  const raw = fs.existsSync(CONFIG_FILE) ? readConfig() : '';
+  const get = (k, dflt) => {
+    const m = raw.match(new RegExp('^' + k + ':\\s*(.+)$', 'm'));
+    return m ? m[1].trim().replace(/^["']|["']$/g, '') : dflt;
+  };
+  const bool = (k, d) => { const v = get(k, d ? 'yes' : 'no'); return /^(y|yes|true|on|1)$/i.test(v); };
+  return {
+    PlayNotOwnedGames: bool('PlayNotOwnedGames', false),
+    DisableFamilyShareLock: bool('DisableFamilyShareLock', true),
+    DisableParentalRestrictions: bool('DisableParentalRestrictions', false),
+    AutoFilterList: bool('AutoFilterList', true),
+    UseWhitelist: bool('UseWhitelist', false),
+    Notifications: bool('Notifications', true),
+    NotifyInit: bool('NotifyInit', true),
+    WarnHashMissmatch: bool('WarnHashMissmatch', false),
+    API: bool('API', true),
+    DisableCloud: bool('DisableCloud', true),
+    ExtendedLogging: bool('ExtendedLogging', false),
+    FakeEmail: get('FakeEmail', ''),
+    FakeWalletBalance: parseInt(get('FakeWalletBalance', '0'), 10) || 0,
+    LogLevel: parseInt(get('LogLevel', '2'), 10) || 2,
+    HubcapKey: get('HubcapKey', ''),
+    SteamPath: get('SteamPath', ''),
+  };
+});
 ipcMain.handle('backend:manageCloud', () => {
   // Enable CloudRedirect: ensure cloud saves are NOT disabled, then patch steam .desktop via dc_run.
   setConfigKey('DisableCloud', 'no');

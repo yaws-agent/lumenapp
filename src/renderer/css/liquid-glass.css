@@ -543,6 +543,22 @@ select.glass-input option { color: #111; }
 .recent-sub { font-size: 11px; color: rgba(40,40,70,0.5); }
 .small { font-size: 12px; }
 
+/* ===== Settings: slsteam-moon config rows + Hubcap ===== */
+.section-title { margin: 0 0 10px; font-size: 16px; font-weight: 700; color: rgba(25,25,45,0.95); }
+.cfg-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 9px 0; border-bottom: 1px solid rgba(120,120,160,0.14); }
+.cfg-row:last-child { border-bottom: none; }
+.cfg-lblwrap { display: flex; flex-direction: column; gap: 2px; }
+.cfg-lbl { font-size: 13.5px; font-weight: 600; color: rgba(25,25,45,0.92); }
+.cfg-level { font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px; }
+.cfg-level.info { color: rgba(40,120,220,0.9); }
+.cfg-level.advanced { color: rgba(200,140,0,0.95); }
+.cfg-level.danger { color: rgba(220,60,50,0.95); }
+.cfg-ctrl { flex: 0 0 auto; display: flex; align-items: center; }
+.cfg-select, .cfg-num, .cfg-text { min-width: 160px; }
+.cfg-num { max-width: 160px; }
+.link { color: rgba(80,60,220,0.95); text-decoration: none; font-weight: 600; }
+.link:hover { text-decoration: underline; }
+
 /* ===== Add tab placeholder ===== */
 .add-placeholder { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 40px 26px; gap: 6px; }
 .add-placeholder-glyph { font-size: 54px; line-height: 1; margin-bottom: 6px;
