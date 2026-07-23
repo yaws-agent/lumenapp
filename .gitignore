@@ -1,17 +1,20 @@
 node_modules/
-*.png
-*.mp4
 *.log
 .DS_Store
 dist/
+release/
 
-# Internal docs / local-only artifacts (never commit)
-AGENT_TASK.md
-BRIEFING.md
-*.mp4
+# Images / videos / docs stay local (never commit)
 *.png
+*.mp4
 *.mov
 *.pdf
-# credential files
+AGENT_TASK.md
+BRIEFING.md
+
+# Credential files (never commit)
 .hermes/
 ghpat
+
+# Exception: track the app icon source so the build is reproducible
+!build/icon.png

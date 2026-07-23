@@ -4,7 +4,8 @@ contextBridge.exposeInMainWorld('lumen', {
   restartSteam: () => ipcRenderer.invoke('backend:restartSteam'),
   discordLogin: () => ipcRenderer.invoke('backend:discordLogin'),
   open: (u) => ipcRenderer.invoke('backend:open', u),
-  checkUpdate: () => ipcRenderer.invoke('backend:checkUpdate'),
+  checkUpdate: () => ipcRenderer.invoke('app:checkUpdate'),
+  quitAndInstall: () => ipcRenderer.invoke('app:quitAndInstall'),
   installPlugin: () => ipcRenderer.invoke('backend:installPlugin'),
   uninstallPlugin: () => ipcRenderer.invoke('backend:uninstallPlugin'),
   setConfig: (k, v) => ipcRenderer.invoke('backend:setConfig', { key: k, value: v }),
@@ -15,4 +16,5 @@ contextBridge.exposeInMainWorld('lumen', {
   installManifestId: (id) => ipcRenderer.invoke('backend:installManifestId', id),
   setMode: (m) => ipcRenderer.invoke('backend:setMode', m),
   saveSettings: (c) => ipcRenderer.invoke('backend:saveSettings', c),
+  onUpdate: (ev, cb) => ipcRenderer.on(ev, (_e, ...a) => cb(...a)),
 });

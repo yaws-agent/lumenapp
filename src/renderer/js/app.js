@@ -176,6 +176,28 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
   toast('Settings saved', 'ok');
 });
 
+// ---- Auto-update (About > Check for Updates) ----
+const btnCheckUpdate = document.getElementById('btnCheckUpdate');
+if (btnCheckUpdate) {
+  btnCheckUpdate.addEventListener('click', async () => {
+    btnCheckUpdate.disabled = true;
+    btnCheckUpdate.textContent = 'Checking…';
+    const r = await window.lumen.checkUpdate().catch(() => ({ ok: false }));
+    btnCheckUpdate.disabled = false;
+    btnCheckUpdate.textContent = 'Check for Updates';
+    if (!r || !r.ok) { toast('Update check unavailable', 'err'); return; }
+    toast('You are on the latest version', 'ok');
+  });
+}
+// Updater events pushed from the main process (via preload bridge)
+if (window.lumen && window.lumen.onUpdate) {
+  window.lumen.onUpdate('update:available', () => toast('Update available — downloading…', 'ok'));
+  window.lumen.onUpdate('update:progress', () => {});
+  window.lumen.onUpdate('update:ready', () => {
+    if (confirm('A new version of Lumen is ready. Restart and install now?')) window.lumen.quitAndInstall();
+  });
+}
+
 // init
 refreshStatus();
 

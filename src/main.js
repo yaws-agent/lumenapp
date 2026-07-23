@@ -82,7 +82,6 @@ ipcMain.handle('backend:status', () => ({ installed: isInstalled(), backend: 'sl
 ipcMain.handle('backend:restartSteam', () => restartSteam());
 ipcMain.handle('backend:discordLogin', () => { shell.openExternal('https://discord.com/login'); return true; });
 ipcMain.handle('backend:open', (_e, url) => { shell.openExternal(url); return true; });
-ipcMain.handle('backend:checkUpdate', () => true);
 ipcMain.handle('backend:installPlugin', () => {
   ensureConfig();
   setConfigKey('API', 'yes'); // manifest install needs the API pipe
@@ -135,6 +134,17 @@ ipcMain.handle('backend:installManifestId', (_e, id) => {
   return { ok, cmd: `install|${appId}|${library}` };
 });
 ipcMain.handle('backend:setMode', (_e, mode) => { setConfigKey('Backend', mode); return true; });
+ipcMain.handle('app:checkUpdate', async () => {
+  if (!autoUpdater) return { ok: false, error: 'electron-updater not available' };
+  try {
+    const r = await autoUpdater.checkForUpdates();
+    return { ok: true, updateAvailable: !!(r && r.updateInfo) };
+  } catch (e) { return { ok: false, error: String(e.message || e) }; }
+});
+ipcMain.handle('app:quitAndInstall', () => {
+  if (autoUpdater && updateReady) autoUpdater.quitAndInstall();
+  return true;
+});
 ipcMain.handle('backend:saveSettings', (_e, cfg) => {
   if (cfg.steamPath) setConfigKey('SteamPath', cfg.steamPath);
   if (cfg.hubcapKey) setConfigKey('HubcapKey', cfg.hubcapKey);
@@ -143,6 +153,42 @@ ipcMain.handle('backend:saveSettings', (_e, cfg) => {
   setConfigKey('Notifications', cfg.notifications ? 'yes' : 'no');
   return true;
 });
+
+// ---- Auto-updater (electron-updater -> GitHub Releases, distro-agnostic AppImage) ----
+let autoUpdater = null;
+let updateReady = false;
+try {
+  const { autoUpdater: AU } = require('electron-updater');
+  autoUpdater = AU;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  // Channel follows the user's mode: "beta" or "latest" (Stable).
+  try {
+    const cfgRaw = fs.existsSync(CONFIG_FILE) ? fs.readFileSync(CONFIG_FILE, 'utf8') : '';
+    const m = cfgRaw.match(/Backend:\s*(\S+)/i);
+    autoUpdater.channel = (m && /beta/i.test(m[1])) ? 'beta' : 'latest';
+  } catch (e) { autoUpdater.channel = 'latest'; }
+
+  autoUpdater.on('update-available', () => {
+    if (mainWin) mainWin.webContents.send('update:available');
+  });
+  autoUpdater.on('download-progress', (p) => {
+    if (mainWin) mainWin.webContents.send('update:progress', Math.round(p.percent || 0));
+  });
+  autoUpdater.on('update-downloaded', () => {
+    updateReady = true;
+    if (mainWin) mainWin.webContents.send('update:ready');
+  });
+  autoUpdater.on('error', () => { /* fail silently; user can retry via About */ });
+  // Silently check in the background shortly after launch.
+  setTimeout(() => { try { autoUpdater.checkForUpdates(); } catch (e) {} }, 4000);
+} catch (e) { autoUpdater = null; }
+
+// Keep a handle to the main window so the updater can push events to the UI.
+let mainWin = null;
+function notifyUpdateState() {
+  if (mainWin) mainWin.webContents.send(updateReady ? 'update:ready' : 'update:none');
+}
 
 // ---- Window ----
 function createWindow() {
@@ -156,6 +202,7 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
+  mainWin = win;
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   const viewArg = process.argv.find((a) => a.startsWith('--view='));
   if (viewArg) {
