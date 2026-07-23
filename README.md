@@ -8,7 +8,7 @@
   <a href="https://github.com/yaws-agent/lumenapp/releases"><img src="https://img.shields.io/badge/version-1.0.0-blue?style=flat-square" alt="version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="license"></a>
   <a href="https://www.electronjs.org/"><img src="https://img.shields.io/badge/Electron-30-47848F?style=flat-square&logo=electron&logoColor=white" alt="electron"></a>
-  <a href="https://github.com/yaws-agent/lumenapp/releases"><img src="https://img.shields.io/badge/platform-Linux%20(x86__64%20%2F%20arm64)-2ECF5F?style=flat-square&logo=linux&logoColor=white" alt="platform"></a>
+  <a href="https://github.com/yaws-agent/lumenapp/releases"><img src="https://img.shields.io/badge/platform-Linux%20(x86__64)-2ECF5F?style=flat-square&logo=linux&logoColor=white" alt="platform"></a>
 </p>
 
 <p align="center">
@@ -43,7 +43,7 @@ git clone https://github.com/yaws-agent/lumenapp.git
 cd lumenapp
 npm install
 npm start            # run in dev
-npm run dist         # build AppImage (x64 + arm64)
+npm run dist         # build AppImage (x64)
 npm run release      # build + publish to GitHub Releases (needs GH_TOKEN)
 ```
 
