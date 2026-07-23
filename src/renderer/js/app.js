@@ -374,21 +374,25 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ---- Pointer-tracking sheen over cards and dropzones ----
-// Create a dedicated overlay div so we don't clobber .card::before/::after.
+// ---- Pointer-tracking sheen over cards, dropzones, buttons, nav ----
+function attachSheen(els) {
+  els.forEach((el) => {
+    el.addEventListener('mousemove', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      el.style.setProperty('--mx', x + '%');
+      el.style.setProperty('--my', y + '%');
+    });
+  });
+}
 document.querySelectorAll('.card, .dropzone').forEach((el) => {
   el.classList.add('glass-pointer-sheen');
   const sheen = document.createElement('div');
   sheen.className = 'pointer-sheen';
   el.appendChild(sheen);
-  el.addEventListener('mousemove', (e) => {
-    const rect = el.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    el.style.setProperty('--mx', x + '%');
-    el.style.setProperty('--my', y + '%');
-  });
 });
+attachSheen(document.querySelectorAll('.card, .dropzone, .glass-btn, .nav-item'));
 
 // ---- Set stagger indices on nav items ----
 document.querySelectorAll('.nav-item').forEach((item, i) => {
