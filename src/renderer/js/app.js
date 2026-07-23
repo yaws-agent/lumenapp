@@ -70,15 +70,21 @@ document.getElementById('btnUninstallPlugin').addEventListener('click', async ()
 
 // ---- Fixes (toggles write config) ----
 ['fixParental','fixFamily','fixNotOwned'].forEach((id) => {
-  document.getElementById(id).addEventListener('change', async (e) => {
+  const el = document.getElementById(id);
+  const toggle = () => {
+    el.classList.toggle('on');
     const map = { fixParental: 'DisableParentalRestrictions', fixFamily: 'DisableFamilyShareLock', fixNotOwned: 'PlayNotOwnedGames' };
-    await window.lumen.setConfig(map[id], e.target.checked ? 'yes' : 'no');
-  });
+    window.lumen.setConfig(map[id], el.classList.contains('on') ? 'yes' : 'no');
+  };
+  el.addEventListener('click', toggle);
+  el.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
 });
 
 // ---- Cloud / Manage ----
-document.getElementById('cloudEnable').addEventListener('change', async (e) => {
-  await window.lumen.setConfig('DisableCloud', e.target.checked ? 'no' : 'yes');
+const cloudEl = document.getElementById('cloudEnable');
+cloudEl.addEventListener('click', () => {
+  cloudEl.classList.toggle('on');
+  window.lumen.setConfig('DisableCloud', cloudEl.classList.contains('on') ? 'no' : 'yes');
 });
 document.getElementById('btnCloud').addEventListener('click', () => window.lumen.manageCloud());
 document.getElementById('btnBackup').addEventListener('click', () => window.lumen.backup());
@@ -113,9 +119,9 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
   const cfg = {
     steamPath: document.getElementById('steamPath').value,
     hubcapKey: document.getElementById('hubcapKey').value,
-    autoUpdate: document.getElementById('autoUpdate').checked,
-    autostart: document.getElementById('autostart').checked,
-    notifications: document.getElementById('notif').checked,
+    autoUpdate: document.getElementById('autoUpdate').classList.contains('on'),
+    autostart: document.getElementById('autostart').classList.contains('on'),
+    notifications: document.getElementById('notif').classList.contains('on'),
   };
   await window.lumen.saveSettings(cfg);
   alert('Settings saved');
@@ -123,6 +129,24 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
 
 // init
 refreshStatus();
+
+// ---- Programmatic navigation helper (for automated screenshot capture) ----
+window.__nav = (view) => {
+  const item = document.querySelector('.nav-item[data-view="' + view + '"]');
+  if (item) item.click();
+};
+
+// ---- Keyboard view navigation (1-8) for testing/screenshots ----
+const viewOrder = ['home','plugin','fixes','manage','download','mode','settings','about'];
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  const n = parseInt(e.key, 10);
+  if (n >= 1 && n <= viewOrder.length) {
+    const v = viewOrder[n - 1];
+    const item = document.querySelector('.nav-item[data-view="' + v + '"]');
+    if (item) item.click();
+  }
+});
 
 // ---- Pointer-tracking sheen over cards and dropzones ----
 // Create a dedicated overlay div so we don't clobber .card::before/::after.

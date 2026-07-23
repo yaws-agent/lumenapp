@@ -83,12 +83,9 @@ function createWindow() {
   if (viewArg) {
     const view = viewArg.slice(7);
     win.webContents.once('did-finish-load', () => {
+      // navigate via the renderer's window.__nav helper
       win.webContents.executeJavaScript(
-        `window.lumen.__nav && window.lumen.__nav(${JSON.stringify(view)});`
-      ).catch(() => {});
-      // fallback: dispatch click on matching nav item
-      win.webContents.executeJavaScript(
-        `(() => { const el = document.querySelector('.nav-item[data-view="${view}"]'); if (el) el.click(); })();`
+        `if (window.__nav) window.__nav(${JSON.stringify(view)}); else { const el = document.querySelector('.nav-item[data-view="${view}"]'); if (el) el.click(); }`
       ).catch(() => {});
     });
   }
