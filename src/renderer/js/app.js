@@ -144,18 +144,7 @@ on('btnDiscord', 'click', () => window.lumen.discordLogin());
 on('btnDiscord2', 'click', () => window.lumen.open('https://discord.gg/'));
 on('btnSource', 'click', () => window.lumen.open('https://github.com/swwayps/slsteam-moon'));
 on('btnCheckUpdate', 'click', () => window.lumen.checkUpdate());
-on('btnInstallPlugin', 'click', async () => {
-  const r = await window.lumen.installPlugin();
-  const d = document.getElementById('pluginDot');
-  if (r && r.ok) { if (d) d.className = 'status-dot ok'; const s = document.getElementById('pluginStatus'); if (s) s.textContent = 'Plugin installed'; toast('Plugin installed', 'ok'); }
-  else { if (d) d.className = 'status-dot bad'; toast('Install failed: ' + ((r && r.error) || 'unknown'), 'err'); }
-});
-on('btnUninstallPlugin', 'click', async () => {
-  const r = await window.lumen.uninstallPlugin();
-  const d = document.getElementById('pluginDot');
-  if (r && r.ok) { if (d) d.className = 'status-dot bad'; const s = document.getElementById('pluginStatus'); if (s) s.textContent = 'Plugin not installed'; toast('Plugin uninstalled'); }
-  else { toast('Uninstall failed: ' + ((r && r.error) || 'unknown'), 'err'); }
-});
+// btnRestart (About) is wired via the generic bridge below
 
 // ---- Fixes: placeholder tab (toggles re-wired when Fixes is implemented) ----
 
@@ -222,11 +211,6 @@ async function addDroppedFiles(files) {
   if (added) { await loadItems(); toast(added + ' file(s) added', 'ok'); }
   else toast('No .lua / .manifest / .zip files', 'err');
 }
-
-// ---- Mode ----
-document.getElementById('backendSelect').addEventListener('change', async (e) => {
-  await window.lumen.setMode(e.target.value);
-});
 
 // ---- Settings: slsteam-moon schema + Hubcap ----
 // Schema mirrors swwayps/lumen lua/slsconfig.lua (visible keys only; SafeMode hidden).
@@ -379,7 +363,7 @@ window.__nav = (view) => {
 };
 
 // ---- Keyboard view navigation (1-8) for testing/screenshots ----
-const viewOrder = ['home','plugin','fixes','manage','add','mode','settings','about'];
+const viewOrder = ['home','fixes','manage','add','settings','about'];
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   const n = parseInt(e.key, 10);

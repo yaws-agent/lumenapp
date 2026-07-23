@@ -88,7 +88,66 @@ function runSetup(args) {
   }
 }
 function restartSteam() {
-  try { execSync('pkill -f steam 2>/dev/null; sleep 1; nohup steam >/dev/null 2>&1 &'); } catch (e) {}
+  // Mirror lua/restart_steam.sh: restart Steam through the slsteam-moon
+  // wrapper, surviving Steam's own exit. Steam runtime env must not leak
+  // into the fresh client.
+  const env = Object.assign({}, process.env);
+  ['LD_LIBRARY_PATH','LD_PRELOAD','LD_AUDIT','STEAM_RUNTIME_LIBRARY_PATH','STEAM_ZENITY']
+    .forEach((k) => { delete env[k]; });
+  const launcher = path.join(os.homedir(), '.local/share/SLSsteam/path/steam');
+  const run = (cmd, args) => { try { spawn(cmd, args, { env, detached: true, stdio: 'ignore' }); } catch (e) {} };
+
+  // Game-mode / session supervision: restart the supervising unit.
+  try {
+    const which = (c) => { try { execSync(`command -v ${c} >/dev/null 2>&1`); return true; } catch (e) { return false; } };
+    if (which('systemctl')) {
+      const uid = os.userInfo().uid;
+      env.XDG_RUNTIME_DIR = env.XDG_RUNTIME_DIR || `/run/user/${uid}`;
+      if (!execSync(`systemctl --user is-active --quiet steam-launcher.service 2>/dev/null`).toString().trim()) {
+        run('systemctl', ['--user', 'restart', 'steam-launcher.service']);
+        return true;
+      }
+      const gs = execSync(`systemctl --user list-units --type=service --state=active --plain --no-legend 'gamescope-session*' 2>/dev/null | awk '{print $1}' | head -n1`).toString().trim();
+      if (gs) {
+        run('systemctl', ['--user', 'restart', gs]);
+        return true;
+      }
+    }
+  } catch (e) {}
+
+  // Desktop sessions: relaunch via the slsteam-moon wrapper only.
+  if (!fs.existsSync(launcher)) return false;
+  try { execSync('sync'); } catch (e) {}
+  try { execSync('pkill -KILL -x steam >/dev/null 2>&1 || true'); } catch (e) {}
+  // Poll until the client and its helpers are gone (mirrors the shell loop).
+  const waitClientGone = () => new Promise((resolve) => {
+    const deadline = Date.now() + 15000;
+    const tick = () => {
+      let alive = false;
+      try {
+        if (execSync("pgrep -x steam >/dev/null 2>&1; pgrep -f 'steamwebhelper' >/dev/null 2>&1; pgrep -f '/steam.sh' >/dev/null 2>&1; pgrep -f 'srt-logger .*console-linux.txt' >/dev/null 2>&1").toString()) {}
+      } catch (e) {}
+      // pgrep returns 0 if ANY matched; detect by exit code instead:
+      const anyAlive = () => {
+        for (const p of ['steam', 'steamwebhelper', '/steam.sh', 'srt-logger .*console-linux.txt']) {
+          try { execSync(`pgrep -f '${p}' >/dev/null 2>&1`); return true; } catch (e) {}
+        }
+        return false;
+      };
+      if (!anyAlive() || Date.now() > deadline) {
+        try { execSync("pkill -KILL -f 'steamwebhelper' >/dev/null 2>&1 || true; pkill -KILL -f 'srt-logger .*console-linux.txt' >/dev/null 2>&1 || true"); } catch (e) {}
+        return resolve();
+      }
+      setTimeout(tick, 200);
+    };
+    tick();
+  });
+  waitClientGone().then(() => {
+    setTimeout(() => {
+      try { process.chdir(os.homedir()); } catch (e) {}
+      run(launcher);
+    }, 12000);
+  });
   return true;
 }
 
