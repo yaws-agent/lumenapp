@@ -18,3 +18,5 @@ ghpat
 
 # Exception: track the app icon source so the build is reproducible
 !build/icon.png
+# Exception: track the Liquid Glass displacement map (required runtime asset)
+!src/renderer/assets/glass-displace.png
