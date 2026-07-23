@@ -4,7 +4,19 @@
 // ---- Navigation (with animated transitions) ----
 const navItems = document.querySelectorAll('.nav-item');
 const views = document.querySelectorAll('.view');
+// Inject the iridescent curved-glass hover lens into each nav item (Apple Liquid Glass style)
 navItems.forEach((item) => {
+  if (!item.querySelector('.glass-lens')) {
+    const lens = document.createElement('span');
+    lens.className = 'glass-lens';
+    item.insertBefore(lens, item.firstChild);
+  }
+  // track cursor so the lens specular follows the pointer
+  item.addEventListener('pointermove', (e) => {
+    const r = item.getBoundingClientRect();
+    item.style.setProperty('--mx', (((e.clientX - r.left) / r.width) * 100) + '%');
+    item.style.setProperty('--my', (((e.clientY - r.top) / r.height) * 100) + '%');
+  });
   item.addEventListener('click', () => {
     const target = item.dataset.view;
     navItems.forEach((n) => n.classList.remove('active'));
@@ -19,6 +31,20 @@ navItems.forEach((item) => {
       el.classList.add('view-entrance');
     }
     if (target === 'home') refreshStatus();
+  });
+});
+
+// Inject the iridescent curved-glass hover lens into each .glass-btn too (Apple Liquid Glass)
+document.querySelectorAll('.glass-btn').forEach((btn) => {
+  if (!btn.querySelector('.glass-lens')) {
+    const lens = document.createElement('span');
+    lens.className = 'glass-lens';
+    btn.insertBefore(lens, btn.firstChild);
+  }
+  btn.addEventListener('pointermove', (e) => {
+    const r = btn.getBoundingClientRect();
+    btn.style.setProperty('--mx', (((e.clientX - r.left) / r.width) * 100) + '%');
+    btn.style.setProperty('--my', (((e.clientY - r.top) / r.height) * 100) + '%');
   });
 });
 
@@ -205,6 +231,17 @@ document.querySelectorAll('.nav-item').forEach((item, i) => {
       const go = () => window.__nav(m);
       if (document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(go, 60);
       else document.addEventListener('DOMContentLoaded', () => setTimeout(go, 60));
+    }
+    // ?lens=X forces the iridescent hover lens visible on a nav item (screenshot aid)
+    const lens = params.get('lens');
+    if (lens) {
+      const apply = () => {
+        const it = document.querySelector('.nav-item[data-view="' + lens + '"]');
+        if (it) { it.style.setProperty('--mx','50%'); it.style.setProperty('--my','42%');
+          const l = it.querySelector('.glass-lens'); if (l) l.style.opacity = '1'; }
+      };
+      if (document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(apply, 120);
+      else document.addEventListener('DOMContentLoaded', () => setTimeout(apply, 120));
     }
   } catch (e) {}
 })();
