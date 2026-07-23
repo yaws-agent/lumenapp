@@ -30,7 +30,7 @@ navItems.forEach((item) => {
       el.classList.remove('hidden');
       el.classList.add('view-entrance');
     }
-    if (target === 'home') refreshStatus();
+    if (target === 'home') { refreshStatus(); loadItems(); }
   });
 });
 
@@ -59,6 +59,53 @@ function staggerEntrance(container) {
   });
 }
 
+// ---- Home: Luas counter + added/recent lists (shared store) ----
+function luaBadge(type) {
+  const map = { lua: 'LUA', manifest: 'MAN', zip: 'ZIP', game: 'GAME' };
+  return `<span class="item-type type-${type}">${map[type] || type.toUpperCase()}</span>`;
+}
+function renderHome() {
+  const items = (window.__lumenItems || []);
+  const count = items.length;
+  const c = document.getElementById('luaCount');
+  if (c) { c.textContent = count; c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); }
+
+  const list = document.getElementById('homeItemList');
+  if (list) {
+    if (!items.length) list.innerHTML = '<p class="muted small">Nothing added yet.</p>';
+    else list.innerHTML = items.map((i) => `
+      <div class="item-row">
+        ${luaBadge(i.type)}
+        <span class="item-name">${i.name}${i.appid ? ' <span class="item-appid">#' + i.appid + '</span>' : ''}</span>
+        <span class="item-when">${timeAgo(i.addedAt)}</span>
+      </div>`).join('');
+  }
+  const recent = document.getElementById('homeRecent');
+  if (recent) {
+    const games = items.filter((i) => i.type === 'game').slice(0, 5);
+    if (!games.length) recent.innerHTML = '<p class="muted small">No games added yet.</p>';
+    else recent.innerHTML = games.map((g) => `
+      <div class="recent-row">
+        <div class="recent-cap">${g.image ? `<img src="${g.image}" alt="">` : (g.name || '?').charAt(0)}</div>
+        <div class="recent-meta"><div class="recent-name">${g.name || 'Unknown'}</div><div class="recent-sub">added ${timeAgo(g.addedAt)}</div></div>
+      </div>`).join('');
+  }
+}
+function timeAgo(iso) {
+  try {
+    const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s / 60) + 'm ago';
+    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+    return Math.floor(s / 86400) + 'd ago';
+  } catch (e) { return ''; }
+}
+async function loadItems() {
+  try { window.__lumenItems = await window.lumen.getItems(); }
+  catch (e) { window.__lumenItems = []; }
+  renderHome();
+}
+
 // ---- Backend status ----
 async function refreshStatus() {
   try {
@@ -70,13 +117,14 @@ async function refreshStatus() {
   } catch (e) {
     document.getElementById('statusText').textContent = 'Status unavailable';
   }
-}
-
 // ---- Lightweight toast feedback ----
 function toast(msg, kind) {
   let t = document.getElementById('toast');
   if (!t) {
     t = document.createElement('div');
+    t.id = 'toast';
+    document.body.appendChild(t);
+  }
     t.id = 'toast';
     document.body.appendChild(t);
   }
@@ -137,26 +185,31 @@ document.getElementById('btnRestore').addEventListener('click', async () => {
   toast(r && r.ok ? 'Config restored' : 'Restore failed: ' + ((r && r.error) || 'no backup'), r && r.ok ? 'ok' : 'err');
 });
 
-// ---- Manifestos (dropzone + install) ----
+// ---- Home dropzone (.lua / .manifest / .zip) -> shared store ----
 const dz = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
 document.getElementById('btnBrowse').addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', async (e) => {
-  const files = Array.from(e.target.files).map((f) => f.path);
-  await window.lumen.installManifests(files);
+  const files = Array.from(e.target.files).map((f) => f.name);
+  await addDroppedFiles(files);
 });
 ['dragover','dragenter'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
 ['dragleave','drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
 dz.addEventListener('drop', async (e) => {
-  const files = Array.from(e.dataTransfer.files).map((f) => f.path);
-  await window.lumen.installManifests(files);
+  const files = Array.from(e.dataTransfer.files).map((f) => f.name);
+  await addDroppedFiles(files);
 });
-document.getElementById('btnInstallManifest').addEventListener('click', async () => {
-  const v = document.getElementById('manifestId').value.trim();
-  if (!v) { toast('Enter a Manifest ID (appId [library])', 'err'); return; }
-  const r = await window.lumen.installManifestId(v);
-  toast(r && r.ok ? 'Sent to Steam: ' + (r.cmd || v) : 'Failed: ' + ((r && r.error) || ''), r && r.ok ? 'ok' : 'err');
-});
+async function addDroppedFiles(files) {
+  let added = 0;
+  for (const name of files) {
+    const ext = name.split('.').pop().toLowerCase();
+    const type = ext === 'lua' ? 'lua' : (ext === 'manifest' ? 'manifest' : 'zip');
+    await window.lumen.addItem({ name, type, file: name });
+    added++;
+  }
+  if (added) { await loadItems(); toast(added + ' file(s) added', 'ok'); }
+  else toast('No .lua / .manifest / .zip files', 'err');
+}
 
 // ---- Mode ----
 document.getElementById('backendSelect').addEventListener('change', async (e) => {
@@ -200,6 +253,7 @@ if (window.lumen && window.lumen.onUpdate) {
 
 // init
 refreshStatus();
+loadItems();
 
 // ---- Programmatic navigation helper (for automated screenshot capture) ----
 window.__nav = (view) => {
@@ -208,7 +262,7 @@ window.__nav = (view) => {
 };
 
 // ---- Keyboard view navigation (1-8) for testing/screenshots ----
-const viewOrder = ['home','plugin','fixes','manage','download','mode','settings','about'];
+const viewOrder = ['home','plugin','fixes','manage','add','mode','settings','about'];
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   const n = parseInt(e.key, 10);

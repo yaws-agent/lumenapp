@@ -14,6 +14,10 @@ contextBridge.exposeInMainWorld('lumen', {
   restore: () => ipcRenderer.invoke('backend:restore'),
   installManifests: (f) => ipcRenderer.invoke('backend:installManifests', f),
   installManifestId: (id) => ipcRenderer.invoke('backend:installManifestId', id),
+  // shared "Luas" store (Home + Manifestos + Add tab all push here)
+  getItems: () => ipcRenderer.invoke('store:getItems'),
+  addItem: (item) => ipcRenderer.invoke('store:addItem', item),
+  removeItem: (id) => ipcRenderer.invoke('store:removeItem', id),
   setMode: (m) => ipcRenderer.invoke('backend:setMode', m),
   saveSettings: (c) => ipcRenderer.invoke('backend:saveSettings', c),
   onUpdate: (ev, cb) => ipcRenderer.on(ev, (_e, ...a) => cb(...a)),

@@ -7,9 +7,24 @@ const os = require('os');
 const { execSync, spawn } = require('child_process');
 const CONFIG_DIR = path.join(os.homedir(), '.config', 'SLSsteam');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml');
+const LUMEN_DIR = path.join(os.homedir(), '.config', 'Lumen');
+const STORE_FILE = path.join(LUMEN_DIR, 'added.json');
 const API_PIPE = '/tmp/SLSsteam.API';
 const SLS_DIR = path.join(os.homedir(), '.local', 'share', 'SLSsteam');
 const BACKUP_FILE = path.join(CONFIG_DIR, 'config.yml.bak');
+
+// ---- Shared "Luas" store (Home counter + Manifestos + Add tab) ----
+function readStore() {
+  try {
+    if (!fs.existsSync(LUMEN_DIR)) fs.mkdirSync(LUMEN_DIR, { recursive: true });
+    if (!fs.existsSync(STORE_FILE)) return [];
+    return JSON.parse(fs.readFileSync(STORE_FILE, 'utf8')) || [];
+  } catch (e) { return []; }
+}
+function writeStore(items) {
+  if (!fs.existsSync(LUMEN_DIR)) fs.mkdirSync(LUMEN_DIR, { recursive: true });
+  fs.writeFileSync(STORE_FILE, JSON.stringify(items, null, 2));
+}
 
 // Resolve the slsteam-moon setup.sh (installer). Search common locations.
 function findSetup() {
@@ -134,6 +149,29 @@ ipcMain.handle('backend:installManifestId', (_e, id) => {
   return { ok, cmd: `install|${appId}|${library}` };
 });
 ipcMain.handle('backend:setMode', (_e, mode) => { setConfigKey('Backend', mode); return true; });
+
+// ---- Shared "Luas" store ----
+ipcMain.handle('store:getItems', () => readStore());
+ipcMain.handle('store:addItem', (_e, item) => {
+  const items = readStore();
+  const entry = {
+    id: item.id || ('i' + Date.now() + Math.floor(Math.random() * 1e4)),
+    name: item.name || item.file || 'Untitled',
+    type: item.type || 'lua',          // lua | manifest | zip | game
+    file: item.file || null,
+    appid: item.appid || null,
+    addedAt: item.addedAt || new Date().toISOString(),
+  };
+  items.unshift(entry);
+  writeStore(items);
+  return entry;
+});
+ipcMain.handle('store:removeItem', (_e, id) => {
+  const items = readStore().filter((i) => i.id !== id);
+  writeStore(items);
+  return true;
+});
+
 ipcMain.handle('app:checkUpdate', async () => {
   if (!autoUpdater) return { ok: false, error: 'electron-updater not available' };
   try {
