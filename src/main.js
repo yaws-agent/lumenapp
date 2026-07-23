@@ -8,12 +8,36 @@ const { execSync, spawn } = require('child_process');
 const CONFIG_DIR = path.join(os.homedir(), '.config', 'SLSsteam');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml');
 const API_PIPE = '/tmp/SLSsteam.API';
+const SLS_DIR = path.join(os.homedir(), '.local', 'share', 'SLSsteam');
+const BACKUP_FILE = path.join(CONFIG_DIR, 'config.yml.bak');
+
+// Resolve the slsteam-moon setup.sh (installer). Search common locations.
+function findSetup() {
+  const cand = [
+    process.env.SLSTEAM_MOON_SETUP,
+    path.join(SLS_DIR, 'setup.sh'),
+    '/opt/slsteam-moon/setup.sh',
+    path.join(__dirname, '..', 'slsteam-moon', 'setup.sh'),
+  ];
+  for (const c of cand) {
+    if (c && fs.existsSync(c)) return c;
+  }
+  return null;
+}
 
 function ensureConfig() {
   if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true });
   if (!fs.existsSync(CONFIG_FILE)) {
+    // Defaults mirror slsteam-moon's config_default.hpp where it matters.
     fs.writeFileSync(CONFIG_FILE,
-      '# Lumen-managed slsteam-moon config\nDisableFamilyShareLock: no\nDisableParentalRestrictions: no\nPlayNotOwnedGames: no\nDisableCloud: no\nAPI: yes\nNotifications: yes\nLogLevel: 2\n');
+      '# Lumen-managed slsteam-moon config\n' +
+      'DisableFamilyShareLock: yes\n' +
+      'DisableParentalRestrictions: no\n' +
+      'PlayNotOwnedGames: no\n' +
+      'DisableCloud: no\n' +
+      'API: yes\n' +
+      'Notifications: yes\n' +
+      'LogLevel: 2\n');
   }
 }
 function readConfig() {
@@ -29,16 +53,27 @@ function setConfigKey(key, value) {
   fs.writeFileSync(CONFIG_FILE, c);
 }
 function isInstalled() {
-  // hook library present in SLSsteam dir?
-  return fs.existsSync(path.join(os.homedir(), '.local', 'share', 'SLSsteam', 'SLSsteam.so'));
+  return fs.existsSync(path.join(SLS_DIR, 'SLSsteam.so'));
 }
+// Backend API pipe: commands are pipe-separated, e.g. "install|appId|library".
 function sendApi(cmd) {
   try { fs.writeFileSync(API_PIPE, cmd + '\n'); return true; }
   catch (e) { return false; }
 }
+function runSetup(args) {
+  const setup = findSetup();
+  if (!setup) {
+    return { ok: false, error: 'slsteam-moon setup.sh not found. Clone https://github.com/swwayps/slsteam-moon and point SLSTEAM_MOON_SETUP at it, or install via the project README.' };
+  }
+  try {
+    const out = execSync(`bash "${setup}" ${args}`, { cwd: path.dirname(setup), timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] });
+    return { ok: true, log: out.toString() };
+  } catch (e) {
+    return { ok: false, error: (e.stdout ? e.stdout.toString() : '') + (e.stderr ? e.stderr.toString() : '') + String(e.message) };
+  }
+}
 function restartSteam() {
-  // best-effort: if steam exists, restart it; otherwise just report
-  try { execSync('pkill -f steam 2>/dev/null; steam &'); } catch (e) {}
+  try { execSync('pkill -f steam 2>/dev/null; sleep 1; nohup steam >/dev/null 2>&1 &'); } catch (e) {}
   return true;
 }
 
@@ -48,15 +83,58 @@ ipcMain.handle('backend:restartSteam', () => restartSteam());
 ipcMain.handle('backend:discordLogin', () => { shell.openExternal('https://discord.com/login'); return true; });
 ipcMain.handle('backend:open', (_e, url) => { shell.openExternal(url); return true; });
 ipcMain.handle('backend:checkUpdate', () => true);
-ipcMain.handle('backend:installPlugin', () => { ensureConfig(); return true; });
-ipcMain.handle('backend:uninstallPlugin', () => true);
-ipcMain.handle('backend:setConfig', (_e, { key, value }) => setConfigKey(key, value));
-ipcMain.handle('backend:manageCloud', () => true);
-ipcMain.handle('backend:backup', () => { /* copy config.yml to backup */ return true; });
-ipcMain.handle('backend:restore', () => true);
-ipcMain.handle('backend:installManifests', (_e, files) => { /* drop .lua/.manifest/.zip */ return files; });
-ipcMain.handle('backend:installManifestId', (_e, id) => { sendApi('install|' + id.replace(/\s+/g, '|')); return true; });
-ipcMain.handle('backend:setMode', (_e, mode) => setConfigKey('Backend', mode));
+ipcMain.handle('backend:installPlugin', () => {
+  ensureConfig();
+  setConfigKey('API', 'yes'); // manifest install needs the API pipe
+  const r = runSetup('install');
+  return r;
+});
+ipcMain.handle('backend:uninstallPlugin', () => runSetup('uninstall'));
+ipcMain.handle('backend:setConfig', (_e, { key, value }) => { setConfigKey(key, value); return true; });
+ipcMain.handle('backend:manageCloud', () => {
+  // Enable CloudRedirect: ensure cloud saves are NOT disabled, then patch steam .desktop via dc_run.
+  setConfigKey('DisableCloud', 'no');
+  const dc = path.join(SLS_DIR, 'desktop-coverage.lib.sh');
+  let log = '';
+  if (fs.existsSync(dc)) {
+    try {
+      log = execSync(`bash -c 'source "${dc}" && dc_run'`, { timeout: 30000, stdio: ['ignore','pipe','pipe'] }).toString();
+    } catch (e) { log = (e.stderr ? e.stderr.toString() : '') + String(e.message); }
+  }
+  return { ok: true, log };
+});
+ipcMain.handle('backend:backup', () => {
+  ensureConfig();
+  fs.copyFileSync(CONFIG_FILE, BACKUP_FILE);
+  return { ok: true, file: BACKUP_FILE };
+});
+ipcMain.handle('backend:restore', () => {
+  if (!fs.existsSync(BACKUP_FILE)) return { ok: false, error: 'No backup found' };
+  fs.copyFileSync(BACKUP_FILE, CONFIG_FILE);
+  return { ok: true, file: BACKUP_FILE };
+});
+ipcMain.handle('backend:installManifests', (_e, files) => {
+  // drop .lua/.manifest/.zip -> best-effort copy into the manifests drop dir
+  const dir = path.join(SLS_DIR, 'manifests');
+  try { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}
+  let n = 0;
+  for (const f of (files || [])) {
+    try { fs.copyFileSync(f, path.join(dir, path.basename(f))); n++; } catch (e) {}
+  }
+  return { ok: true, count: n };
+});
+ipcMain.handle('backend:installManifestId', (_e, id) => {
+  // Backend API: install|appId|library  (input "appId library", e.g. "480 200")
+  ensureConfig();
+  setConfigKey('API', 'yes');
+  const parts = String(id).trim().split(/\s+/);
+  const appId = parts[0];
+  const library = parts[1] || '0';
+  if (!/^\d+$/.test(appId)) return { ok: false, error: 'Manifest ID must be numeric (appId [library])' };
+  const ok = sendApi(`install|${appId}|${library}`);
+  return { ok, cmd: `install|${appId}|${library}` };
+});
+ipcMain.handle('backend:setMode', (_e, mode) => { setConfigKey('Backend', mode); return true; });
 ipcMain.handle('backend:saveSettings', (_e, cfg) => {
   if (cfg.steamPath) setConfigKey('SteamPath', cfg.steamPath);
   if (cfg.hubcapKey) setConfigKey('HubcapKey', cfg.hubcapKey);

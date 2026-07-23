@@ -46,6 +46,20 @@ async function refreshStatus() {
   }
 }
 
+// ---- Lightweight toast feedback ----
+function toast(msg, kind) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.className = 'toast show' + (kind ? ' ' + kind : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = 'toast'; }, 3200);
+}
+
 // ---- Buttons ----
 document.getElementById('btnRestart').addEventListener('click', () => window.lumen.restartSteam());
 document.getElementById('btnDiscord').addEventListener('click', () => window.lumen.discordLogin());
@@ -54,14 +68,16 @@ document.getElementById('btnSource').addEventListener('click', () => window.lume
 document.getElementById('btnCheckUpdate').addEventListener('click', () => window.lumen.checkUpdate());
 
 document.getElementById('btnInstallPlugin').addEventListener('click', async () => {
-  await window.lumen.installPlugin();
-  const d = document.getElementById('pluginDot'); d.className = 'status-dot ok';
-  document.getElementById('pluginStatus').textContent = 'Plugin installed';
+  const r = await window.lumen.installPlugin();
+  const d = document.getElementById('pluginDot');
+  if (r && r.ok) { d.className = 'status-dot ok'; document.getElementById('pluginStatus').textContent = 'Plugin installed'; toast('Plugin installed', 'ok'); }
+  else { d.className = 'status-dot bad'; toast('Install failed: ' + ((r && r.error) || 'unknown'), 'err'); }
 });
 document.getElementById('btnUninstallPlugin').addEventListener('click', async () => {
-  await window.lumen.uninstallPlugin();
-  const d = document.getElementById('pluginDot'); d.className = 'status-dot bad';
-  document.getElementById('pluginStatus').textContent = 'Plugin not installed';
+  const r = await window.lumen.uninstallPlugin();
+  const d = document.getElementById('pluginDot');
+  if (r && r.ok) { d.className = 'status-dot bad'; document.getElementById('pluginStatus').textContent = 'Plugin not installed'; toast('Plugin uninstalled'); }
+  else { toast('Uninstall failed: ' + ((r && r.error) || 'unknown'), 'err'); }
 });
 
 // ---- Fixes (toggles write config) ----
@@ -82,9 +98,18 @@ cloudEl.addEventListener('click', () => {
   cloudEl.classList.toggle('on');
   window.lumen.setConfig('DisableCloud', cloudEl.classList.contains('on') ? 'no' : 'yes');
 });
-document.getElementById('btnCloud').addEventListener('click', () => window.lumen.manageCloud());
-document.getElementById('btnBackup').addEventListener('click', () => window.lumen.backup());
-document.getElementById('btnRestore').addEventListener('click', () => window.lumen.restore());
+document.getElementById('btnCloud').addEventListener('click', async () => {
+  const r = await window.lumen.manageCloud();
+  toast(r && r.ok ? 'Cloud saves enabled' : 'Cloud setup: ' + ((r && r.error) || 'done'), r && r.ok ? 'ok' : 'err');
+});
+document.getElementById('btnBackup').addEventListener('click', async () => {
+  const r = await window.lumen.backup();
+  toast(r && r.ok ? 'Config backed up' : 'Backup failed: ' + ((r && r.error) || ''), r && r.ok ? 'ok' : 'err');
+});
+document.getElementById('btnRestore').addEventListener('click', async () => {
+  const r = await window.lumen.restore();
+  toast(r && r.ok ? 'Config restored' : 'Restore failed: ' + ((r && r.error) || 'no backup'), r && r.ok ? 'ok' : 'err');
+});
 
 // ---- Manifestos (dropzone + install) ----
 const dz = document.getElementById('dropzone');
@@ -102,7 +127,9 @@ dz.addEventListener('drop', async (e) => {
 });
 document.getElementById('btnInstallManifest').addEventListener('click', async () => {
   const v = document.getElementById('manifestId').value.trim();
-  if (v) await window.lumen.installManifestId(v);
+  if (!v) { toast('Enter a Manifest ID (appId [library])', 'err'); return; }
+  const r = await window.lumen.installManifestId(v);
+  toast(r && r.ok ? 'Sent to Steam: ' + (r.cmd || v) : 'Failed: ' + ((r && r.error) || ''), r && r.ok ? 'ok' : 'err');
 });
 
 // ---- Mode ----
@@ -120,7 +147,7 @@ document.getElementById('btnSaveSettings').addEventListener('click', async () =>
     notifications: document.getElementById('notif').classList.contains('on'),
   };
   await window.lumen.saveSettings(cfg);
-  alert('Settings saved');
+  toast('Settings saved', 'ok');
 });
 
 // init
