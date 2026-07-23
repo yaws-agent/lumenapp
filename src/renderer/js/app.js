@@ -374,7 +374,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ---- Pointer-tracking sheen over cards, dropzones, buttons, nav ----
+// ---- Pointer-tracking lens position (drives .glass-lens in CSS; no extra sheen layer) ----
 function attachSheen(els) {
   els.forEach((el) => {
     el.addEventListener('mousemove', (e) => {
@@ -384,14 +384,17 @@ function attachSheen(els) {
       el.style.setProperty('--mx', x + '%');
       el.style.setProperty('--my', y + '%');
     });
+    // ensure the lens fades out fully when the cursor leaves (no white rastro)
+    el.addEventListener('mouseleave', () => {
+      const l = el.querySelector('.glass-lens');
+      if (l) l.style.opacity = '0';
+    });
   });
 }
-document.querySelectorAll('.card, .dropzone').forEach((el) => {
-  el.classList.add('glass-pointer-sheen');
-  const sheen = document.createElement('div');
-  sheen.className = 'pointer-sheen';
-  el.appendChild(sheen);
-});
+// NOTE: previously we injected a .pointer-sheen <div> + .glass-pointer-sheen::before
+// radial highlight. That extra white layer summed with the refraction and left a
+// visible "rastro branco" on hover, so it was removed — the .glass-lens iridescent
+// lens (now very subtle) is enough.
 attachSheen(document.querySelectorAll('.card, .dropzone, .glass-btn, .nav-item'));
 
 // ---- Set stagger indices on nav items ----
