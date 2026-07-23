@@ -17,10 +17,6 @@ navItems.forEach((item) => {
     if (el) {
       el.classList.remove('hidden');
       el.classList.add('view-entrance');
-      // Re-trigger blurIn animation
-      el.style.animation = 'none';
-      void el.offsetHeight;
-      el.style.animation = '';
     }
     if (target === 'home') refreshStatus();
   });
@@ -168,3 +164,20 @@ document.querySelectorAll('.card, .dropzone').forEach((el) => {
 document.querySelectorAll('.nav-item').forEach((item, i) => {
   item.style.setProperty('--i', i);
 });
+
+// ---- Deep-link to a view via ?view=fixes (Chromium/Electron screenshot helper) ----
+// ?static=1 (or prefers-reduced-motion) disables entrance animations -> shows settled state
+(function () {
+  try {
+    const params = new URLSearchParams(location.search);
+    const reduce = params.get('static') === '1' ||
+      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (reduce) document.body.classList.add('no-anim');
+    const m = params.get('view');
+    if (m) {
+      const go = () => window.__nav(m);
+      if (document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(go, 60);
+      else document.addEventListener('DOMContentLoaded', () => setTimeout(go, 60));
+    }
+  } catch (e) {}
+})();
