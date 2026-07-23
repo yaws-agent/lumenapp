@@ -155,17 +155,7 @@ document.getElementById('btnUninstallPlugin').addEventListener('click', async ()
   else { toast('Uninstall failed: ' + ((r && r.error) || 'unknown'), 'err'); }
 });
 
-// ---- Fixes (toggles write config) ----
-['fixParental','fixFamily','fixNotOwned'].forEach((id) => {
-  const el = document.getElementById(id);
-  const toggle = () => {
-    el.classList.toggle('on');
-    const map = { fixParental: 'DisableParentalRestrictions', fixFamily: 'DisableFamilyShareLock', fixNotOwned: 'PlayNotOwnedGames' };
-    window.lumen.setConfig(map[id], el.classList.contains('on') ? 'yes' : 'no');
-  };
-  el.addEventListener('click', toggle);
-  el.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(); } });
-});
+// ---- Fixes: placeholder tab (toggles re-wired when Fixes is implemented) ----
 
 // ---- Cloud / Backups: moved to Settings tab (re-wired when Settings is redone) ----
 
