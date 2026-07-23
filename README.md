@@ -2,7 +2,7 @@
   <img src="build/icon.png" width="96" height="96" alt="Lumen">
 </p>
 
-<h1 align="center">Lumen</h1>
+<h1 align="center">Lumen App</h1>
 
 <p align="center">
   <a href="https://github.com/yaws-agent/lumenapp/releases"><img src="https://img.shields.io/badge/version-1.0.0-blue?style=flat-square" alt="version"></a>
@@ -12,14 +12,14 @@
 </p>
 
 <p align="center">
-  A clean <b>Apple Liquid Glass</b> interface for the <a href="https://github.com/swwayps/slsteam-moon">slsteam-moon</a> hook (the Linux spiritual successor to <b>Lua Tools</b>).
+  A clean <b>Glass</b> interface for the <a href="https://github.com/swwayps/slsteam-moon">slsteam-moon</a> hook (the Linux spiritual successor to <b>Lua Tools</b>).
 </p>
 
 ---
 
 ## ✨ Features
 
-- **Apple Liquid Glass UI** — frosted glass, iridescent cursor-tracking hover lens, raised active pills. Validated at ~9/10 fidelity.
+- **Glass UI** — frosted glass, iridescent cursor-tracking hover lens, raised active pills. Validated at ~9/10 fidelity.
 - **8 views** — Home, Plugin, Fixes, Manage, Manifests, Mode, Settings, About.
 - **slsteam-moon backend** — install/uninstall the hook, toggle fixes (parental restrictions, family-share lock, unowned games), manage Cloud saves, install manifests, switch update channels.
 - **Distro-agnostic AppImage** — one executable, no install, no `chmod` needed.
